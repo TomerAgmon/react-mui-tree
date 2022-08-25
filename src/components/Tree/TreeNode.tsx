@@ -1,14 +1,8 @@
-import { ExpandLess, ExpandMore, StarBorder } from "@mui/icons-material";
-import {
-  Collapse,
-  List,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
-} from "@mui/material";
+import { ExpandLess, ExpandMore } from "@mui/icons-material";
+import { Collapse, List, ListItemButton } from "@mui/material";
 import { NodeData } from "../../types";
-import InboxIcon from "@mui/icons-material/MoveToInbox";
 import { ReactNode, useState } from "react";
+import CircularProgress from "@mui/material/CircularProgress";
 
 const BASE_PADDING = 2;
 const DEFAULT_PADDING = 4;
@@ -16,15 +10,31 @@ const DEFAULT_PADDING = 4;
 interface TreeNodeProps<T> {
   node: NodeData<T>;
   depth: number;
+  path: Array<string>;
   render: (node: T) => ReactNode;
+  onLoadChildren: (path: Array<string>, node?: T) => void;
 }
 
-export function TreeNode<T>({ node, depth, render }: TreeNodeProps<T>) {
+export function TreeNode<T>({
+  node,
+  depth,
+  path,
+  onLoadChildren,
+  render,
+}: TreeNodeProps<T>) {
   const isRoot = depth === 0;
-  const [open, setOpen] = useState(isRoot);
+  const [isExpanded, setIsExpanded] = useState(isRoot);
 
-  const handleClick = () => {
-    setOpen(!open);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleClick = async () => {
+    setIsExpanded(!isExpanded);
+
+    if (!isExpanded) {
+      setIsLoading(true);
+      await onLoadChildren([...path, node.id], node);
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -38,14 +48,22 @@ export function TreeNode<T>({ node, depth, render }: TreeNodeProps<T>) {
           sx={{ pl: BASE_PADDING + (depth - 1) * DEFAULT_PADDING }}
         >
           {render(node)}
-          {node.children && (open ? <ExpandLess /> : <ExpandMore />)}
+          {node.children && (isExpanded ? <ExpandLess /> : <ExpandMore />)}
         </ListItemButton>
       )}
+      {isLoading && <CircularProgress />}
       {node.children && (
-        <Collapse in={open}>
+        <Collapse in={isExpanded}>
           <List disablePadding={true}>
             {node.children.map((childNode) => (
-              <TreeNode node={childNode} depth={depth + 1} render={render} />
+              <TreeNode
+                key={childNode.id}
+                node={childNode}
+                depth={depth + 1}
+                path={isRoot ? [] : [...path, node.id]}
+                render={render}
+                onLoadChildren={onLoadChildren}
+              />
             ))}
           </List>
         </Collapse>
