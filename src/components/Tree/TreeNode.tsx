@@ -1,7 +1,7 @@
 import { ExpandLess, ExpandMore } from "@mui/icons-material";
 import { Collapse, List, ListItemButton } from "@mui/material";
 import { NodeData } from "../../types";
-import { ReactNode, useState } from "react";
+import { Children, ReactNode, useState } from "react";
 import CircularProgress from "@mui/material/CircularProgress";
 
 const BASE_PADDING = 2;
@@ -30,7 +30,7 @@ export function TreeNode<T>({
   const handleClick = async () => {
     setIsExpanded(!isExpanded);
 
-    if (!isExpanded) {
+    if (!isExpanded && node.children?.length === 0) {
       setIsLoading(true);
       await onLoadChildren([...path, node.id], node);
       setIsLoading(false);

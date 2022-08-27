@@ -1,6 +1,6 @@
 import { Avatar, ListItemText } from "@mui/material";
 import { NodeData } from "../types";
-import { Tree } from "./Tree/Tree";
+import { findNodeByPath, Tree } from "./Tree/Tree";
 import FolderIcon from "@mui/icons-material/Folder";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import InsertPhotoRoundedIcon from "@mui/icons-material/InsertPhotoRounded";
@@ -106,13 +106,13 @@ function File({ file }: { file: FileData }) {
 export function FileSystem() {
   const [files, setFiles] = useState<Array<NodeData<FileData>>>([]);
 
-  const handleLoadChildren = async (path: Array<string>, node?: FileData) => {
+  const handleLoadChildren = async (path: Array<string>) => {
     const res = await loadFiles();
 
     if (files.length !== 0) {
-      const updatedRoot = updateInPath(files, path);
-      if (updatedRoot) {
-        updatedRoot.children = res;
+      const nodeToUpdate = findNodeByPath(files, path);
+      if (nodeToUpdate) {
+        nodeToUpdate.children = res;
         setFiles(files);
       }
     } else {
@@ -131,18 +131,4 @@ export function FileSystem() {
       />
     </>
   );
-}
-
-function updateInPath(files: FileData[], path: string[]): FileData | undefined {
-  let fileRoot: FileData[] | undefined = files;
-  let target: FileData | undefined;
-  for (const id of path) {
-    target = fileRoot?.find((file) => file.id === id);
-
-    if (target) {
-      fileRoot = target.children;
-    }
-  }
-
-  return target;
 }
